@@ -1,0 +1,11 @@
+# Dependencies
+node_modules/
+dist/
+.expo/
+
+# Environment Variables
+.env
+
+# System Files
+.DS_Store
+*.log
