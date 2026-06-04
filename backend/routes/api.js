@@ -100,7 +100,7 @@ router.get('/books/search', async (req, res) => {
     console.log(`\n--- BACKEND SEARCH TRIGGERED ---`);
     const { q } = req.query;
 
-    const apiKey = process.env.GOOGLE_BOOKS_API_KEY || "AIzaSyCsKP58yHC1V0sDFc8BKGKUfMBlcAVe_7I";
+    const apiKey = process.env.GOOGLE_BOOKS_API_KEY;
     
     if (!q) {
       return res.status(400).json({ message: 'Search query is required' });
