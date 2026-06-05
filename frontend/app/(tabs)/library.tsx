@@ -23,6 +23,8 @@ import {
   batchUpdateBooks,
   deleteBooksBatch,
   fetchMyBooks,
+  updateBook,         // <--- ADD THIS
+  fetchGoogleVolume,  // <--- ADD THIS
 } from '@/services/booksApi';
 import type { BookStatus, ShelfBook } from '@/types/library';
 
@@ -148,17 +150,37 @@ export default function LibraryScreen() {
     }
   };
 
-  const handleMove = async (status: BookStatus) => {
+const handleMove = async (status: BookStatus) => {
     const ids = [...selectedIds];
     if (ids.length === 0) return;
     setActing(true);
     setMoveModalVisible(false);
+
     try {
-      const result = await batchUpdateBooks(ids, {
-        status,
-        ...(status === 'finished' ? { dateFinished: new Date().toISOString() } : {}),
-      });
-      setBooks(result.shelf);
+      // Loop through each selected book to fetch its fresh Google data
+      // This makes the "Move" button act exactly like the "Update Book" button!
+      for (const bookId of ids) {
+        // 1. Fetch fresh data directly from Google
+        const volume = await fetchGoogleVolume(bookId).catch(() => null);
+
+        // 2. Build the update payload with the new status
+        const payload: any = {
+          status,
+          ...(status === 'finished' ? { dateFinished: new Date().toISOString() } : {}),
+        };
+
+        // 3. If Google has the real page count, inject it to fix the progress bar
+        if (volume?.volumeInfo?.pageCount) {
+          payload.totalPages = volume.volumeInfo.pageCount;
+        }
+
+        // 4. Send the powerful update to the backend
+        await updateBook(bookId, payload);
+      }
+
+      // 5. Reload the library to instantly show the new page numbers
+      await loadLibrary();
+
       showToast(`${ids.length} book(s) moved`, 'success');
       exitSelection();
     } catch (err) {

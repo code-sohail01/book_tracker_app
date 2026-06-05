@@ -36,7 +36,6 @@ export default function BookCard({
   return (
     <Pressable
       onPress={onPress}
-      accessibilityRole="button"
       accessibilityLabel={`Open ${info.title ?? 'book'} details`}
       style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
       disabled={!onPress}>

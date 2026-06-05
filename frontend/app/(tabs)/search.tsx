@@ -128,7 +128,7 @@ export default function SearchScreen() {
         </View>
       ) : (
         <FlatList
-          data={results}
+          data={results || []}
           keyExtractor={(item) => item.id}
           contentContainerStyle={[
             styles.list,
