@@ -8,8 +8,8 @@ import {
   View,
 } from 'react-native';
 
-import { Colors } from '@/constants/Colors';
-import { theme } from '@/constants/theme';
+import { font } from '@/constants/theme';
+import { useTheme } from '@/context/ThemeContext';
 import type { GoogleBookVolume } from '@/types/books';
 import { getPublishedYear } from '@/types/books';
 
@@ -26,6 +26,9 @@ export default function BookCard({
   onAdd,
   isAdding = false,
 }: BookCardProps) {
+  const { theme } = useTheme();
+  const { colors, spacing, radius, shadow } = theme;
+
   const info = book.volumeInfo;
   const cover =
     info.imageLinks?.thumbnail ??
@@ -37,17 +40,35 @@ export default function BookCard({
     <Pressable
       onPress={onPress}
       accessibilityLabel={`Open ${info.title ?? 'book'} details`}
-      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+      style={({ pressed }) => [
+        styles.card,
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+          borderRadius: radius.lg,
+          padding: spacing.md,
+          marginBottom: spacing.md,
+          ...shadow.card,
+        },
+        pressed && styles.cardPressed,
+      ]}
       disabled={!onPress}>
-      <Image source={{ uri: cover.replace('http://', 'https://') }} style={styles.cover} />
-      <View style={styles.body}>
-        <Text style={styles.title} numberOfLines={2}>
+      <Image
+        source={{ uri: cover.replace('http://', 'https://') }}
+        style={[styles.cover, { borderRadius: radius.sm, backgroundColor: colors.border }]}
+      />
+      <View style={[styles.body, { marginLeft: spacing.md, marginRight: spacing.sm }]}>
+        <Text style={[styles.title, font('bold'), { color: colors.text }]} numberOfLines={2}>
           {info.title ?? 'Untitled'}
         </Text>
-        <Text style={styles.author} numberOfLines={1}>
+        <Text
+          style={[styles.author, font('regular'), { color: colors.textMuted }]}
+          numberOfLines={1}>
           {(info.authors ?? []).join(', ') || 'Unknown author'}
         </Text>
-        {year ? <Text style={styles.year}>{year}</Text> : null}
+        {year ? (
+          <Text style={[styles.year, font('medium'), { color: colors.textMuted }]}>{year}</Text>
+        ) : null}
       </View>
       {onAdd ? (
         <Pressable
@@ -56,15 +77,19 @@ export default function BookCard({
           accessibilityLabel="Quick add to library"
           style={({ pressed }) => [
             styles.addButton,
-            pressed && styles.addButtonPressed,
+            {
+              backgroundColor: colors.primary,
+              ...shadow.card,
+            },
+            pressed && { backgroundColor: colors.primaryDark },
             isAdding && styles.addButtonDisabled,
           ]}
           disabled={isAdding}
           hitSlop={8}>
           {isAdding ? (
-            <ActivityIndicator size="small" color={Colors.surface} />
+            <ActivityIndicator size="small" color={colors.surface} />
           ) : (
-            <Ionicons name="add" size={22} color={Colors.surface} />
+            <Ionicons name="add" size={22} color={colors.surface} />
           )}
         </Pressable>
       ) : null}
@@ -76,13 +101,7 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
-    borderRadius: theme.radius.lg,
-    padding: theme.spacing.md,
-    marginBottom: theme.spacing.md,
     borderWidth: 1,
-    borderColor: Colors.border,
-    ...theme.shadow.card,
   },
   cardPressed: {
     opacity: 0.92,
@@ -91,43 +110,29 @@ const styles = StyleSheet.create({
   cover: {
     width: 56,
     height: 84,
-    borderRadius: theme.radius.sm,
-    backgroundColor: Colors.border,
   },
   body: {
     flex: 1,
-    marginLeft: theme.spacing.md,
-    marginRight: theme.spacing.sm,
     justifyContent: 'center',
   },
   title: {
     fontSize: 16,
-    fontWeight: '700',
-    color: Colors.text,
     lineHeight: 22,
   },
   author: {
     fontSize: 14,
-    color: Colors.textMuted,
     marginTop: 4,
   },
   year: {
     fontSize: 13,
-    color: Colors.textMuted,
     marginTop: 6,
-    fontWeight: '500',
   },
   addButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    ...theme.shadow.card,
-  },
-  addButtonPressed: {
-    backgroundColor: Colors.primaryDark,
   },
   addButtonDisabled: {
     opacity: 0.75,

@@ -1,7 +1,7 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Colors } from '@/constants/Colors';
-import { theme } from '@/constants/theme';
+import { font } from '@/constants/theme';
+import { useTheme } from '@/context/ThemeContext';
 import { BOOK_STATUS_OPTIONS, type BookStatus } from '@/types/library';
 
 type StatusPickerProps = {
@@ -10,66 +10,79 @@ type StatusPickerProps = {
 };
 
 export default function StatusPicker({ value, onChange }: StatusPickerProps) {
+  const { theme } = useTheme();
+  const { colors, spacing, radius } = theme;
+
   return (
     <View style={styles.wrap}>
-      <Text style={styles.label}>Reading status</Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.row}>
+      <Text style={[styles.label, font('bold'), { color: colors.textMuted }]}>
+        Reading status
+      </Text>
+      <View style={[styles.grid, { gap: spacing.sm }]}>
         {BOOK_STATUS_OPTIONS.map((option) => {
           const selected = value === option.value;
           return (
             <Pressable
               key={option.value}
               onPress={() => onChange(option.value)}
-              style={[styles.chip, selected && styles.chipSelected]}>
-              <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
+              style={[
+                styles.chip,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                  borderRadius: radius.md,
+                },
+                selected && {
+                  backgroundColor: colors.chipSelectedBg,
+                  borderColor: colors.chipSelectedBorder,
+                },
+              ]}>
+              <Text
+                style={[
+                  styles.chipText,
+                  font('semiBold'),
+                  { color: colors.textMuted },
+                  selected && { color: colors.primary },
+                ]}
+                numberOfLines={2}>
                 {option.label}
               </Text>
             </Pressable>
           );
         })}
-      </ScrollView>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: {
-    marginBottom: theme.spacing.md,
+    marginBottom: 16,
   },
   label: {
     fontSize: 13,
-    fontWeight: '700',
-    color: Colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
-    marginBottom: theme.spacing.sm,
+    marginBottom: 8,
     marginLeft: 4,
   },
-  row: {
-    gap: theme.spacing.sm,
-    paddingRight: theme.spacing.md,
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
   chip: {
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: 12,
-    borderRadius: theme.radius.pill,
-    backgroundColor: Colors.surface,
+    width: '48%',
+    paddingHorizontal: 12,
+    paddingVertical: 14,
     borderWidth: 1.5,
-    borderColor: Colors.border,
-  },
-  chipSelected: {
-    backgroundColor: '#EFF6FF',
-    borderColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 52,
   },
   chipText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.textMuted,
-  },
-  chipTextSelected: {
-    color: Colors.primary,
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 18,
   },
 });

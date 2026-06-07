@@ -1,8 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Colors } from '@/constants/Colors';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/context/ThemeContext';
 
 type StarRatingProps = {
   value: number;
@@ -15,8 +14,11 @@ export default function StarRating({
   onChange,
   size = 36,
 }: StarRatingProps) {
+  const { theme } = useTheme();
+  const { colors, spacing } = theme;
+
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, { gap: spacing.sm }]}>
       {[1, 2, 3, 4, 5].map((star) => {
         const filled = star <= value;
         return (
@@ -28,7 +30,7 @@ export default function StarRating({
             <Ionicons
               name={filled ? 'star' : 'star-outline'}
               size={size}
-              color={filled ? '#F59E0B' : Colors.border}
+              color={filled ? '#F59E0B' : colors.border}
             />
           </Pressable>
         );
@@ -41,7 +43,6 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
   },
   star: {
     padding: 2,

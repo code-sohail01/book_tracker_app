@@ -3,13 +3,11 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  FlatList,
   Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
-  useColorScheme,
   useWindowDimensions,
   View,
 } from 'react-native';
@@ -17,9 +15,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import CurrentlyReadingCard from '@/components/CurrentlyReadingCard';
 import LogProgressModal from '@/components/LogProgressModal';
-import { Colors } from '@/constants/Colors';
-import { theme } from '@/constants/theme';
+import { font } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 import { useToast } from '@/context/ToastContext';
 import {
   computeDashboardStats,
@@ -28,15 +26,16 @@ import {
 } from '@/services/booksApi';
 import type { DashboardStats, ShelfBook } from '@/types/library';
 
-const CARD_HORIZONTAL_INSET = theme.spacing.lg;
-const CARD_GAP = theme.spacing.md;
+const CARD_HORIZONTAL_INSET = 24;
+const CARD_GAP = 16;
 
 export default function HomeScreen() {
   const { user } = useAuth();
   const { showToast } = useToast();
+  const { theme, isDarkMode, toggleTheme } = useTheme();
+  const { colors, spacing, radius, shadow } = theme;
   const router = useRouter();
   const { width: screenWidth } = useWindowDimensions();
-  const isDark = useColorScheme() === 'dark';
 
   const [books, setBooks] = useState<ShelfBook[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,26 +44,6 @@ export default function HomeScreen() {
   const [modalVisible, setModalVisible] = useState(false);
 
   const cardWidth = screenWidth - CARD_HORIZONTAL_INSET * 2;
-
-  const palette = useMemo(
-    () =>
-      isDark
-        ? {
-            bg: '#0B1220',
-            card: '#151D2E',
-            text: '#F8FAFC',
-            muted: '#94A3B8',
-            statDivider: '#334155',
-          }
-        : {
-            bg: Colors.background,
-            card: Colors.surface,
-            text: Colors.text,
-            muted: Colors.textMuted,
-            statDivider: Colors.border,
-          },
-    [isDark],
-  );
 
   const loadDashboard = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -143,15 +122,15 @@ export default function HomeScreen() {
 
   if (loading && books.length === 0) {
     return (
-      <View style={[styles.centered, { backgroundColor: palette.bg }]}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+      <View style={[styles.centered, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
     <SafeAreaView
-      style={[styles.safe, { backgroundColor: palette.bg }]}
+      style={[styles.safe, { backgroundColor: colors.background }]}
       edges={['top', 'left', 'right']}>
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -159,54 +138,67 @@ export default function HomeScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={() => loadDashboard(true)}
-            tintColor={Colors.primary}
+            tintColor={colors.primary}
           />
         }
         contentContainerStyle={styles.scroll}>
-        <View style={styles.header}>
-          <Text style={[styles.greeting, { color: palette.muted }]}>{greeting}</Text>
-          <Text
-            style={[styles.username, { color: palette.text }]}
-            numberOfLines={2}
-            adjustsFontSizeToFit
-            minimumFontScale={0.85}>
-            {user ?? 'Reader'}
-          </Text>
-          <Text style={[styles.tagline, { color: palette.muted }]}>
-            Your reading journey at a glance
-          </Text>
+        <View style={styles.headerRow}>
+          <View style={styles.header}>
+            <Text style={[styles.greeting, font('semiBold'), { color: colors.textMuted }]}>
+              {greeting}
+            </Text>
+            <Text
+              style={[styles.username, font('extraBold'), { color: colors.text }]}
+              numberOfLines={2}
+              adjustsFontSizeToFit
+              minimumFontScale={0.85}>
+              {user ?? 'Reader'}
+            </Text>
+            <Text style={[styles.tagline, font('regular'), { color: colors.textMuted }]}>
+              Your reading journey at a glance
+            </Text>
+          </View>
+          <Pressable
+            onPress={toggleTheme}
+            style={[styles.themeToggle, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Ionicons
+              name={isDarkMode ? 'sunny' : 'moon'}
+              size={20}
+              color={colors.primary}
+            />
+          </Pressable>
         </View>
 
         <View
           style={[
             styles.statsCard,
-            { backgroundColor: palette.card, borderColor: palette.statDivider },
+            { backgroundColor: colors.surface, borderColor: colors.border, ...shadow.card },
           ]}>
           <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: palette.text }]}>
+            <Text style={[styles.statValue, font('extraBold'), { color: colors.text }]}>
               {stats.booksReadThisYear}
             </Text>
-            <Text style={[styles.statLabel, { color: palette.muted }]}>
+            <Text style={[styles.statLabel, font('semiBold'), { color: colors.textMuted }]}>
               Books Read This Year
             </Text>
           </View>
-          <View style={[styles.statDivider, { backgroundColor: palette.statDivider }]} />
+          <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
           <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: palette.text }]}>
+            <Text style={[styles.statValue, font('extraBold'), { color: colors.text }]}>
               {stats.pagesReadThisYear.toLocaleString()}
             </Text>
-            <Text style={[styles.statLabel, { color: palette.muted }]}>
+            <Text style={[styles.statLabel, font('semiBold'), { color: colors.textMuted }]}>
               Pages Read This Year
             </Text>
           </View>
         </View>
 
         <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: palette.text }]}>
+          <Text style={[styles.sectionTitle, font('extraBold'), { color: colors.text }]}>
             Currently Reading
           </Text>
           {currentlyReading.length > 0 ? (
-            <Text style={[styles.sectionCount, { color: palette.muted }]}>
+            <Text style={[styles.sectionCount, font('semiBold'), { color: colors.textMuted }]}>
               {currentlyReading.length}{' '}
               {currentlyReading.length === 1 ? 'title' : 'titles'}
             </Text>
@@ -217,48 +209,41 @@ export default function HomeScreen() {
           <View
             style={[
               styles.emptyCard,
-              { backgroundColor: palette.card, borderColor: palette.statDivider },
+              { backgroundColor: colors.surface, borderColor: colors.border, ...shadow.card },
             ]}>
             <View style={styles.emptyIcon}>
-              <Ionicons name="book-outline" size={32} color={Colors.primary} />
+              <Ionicons name="book-outline" size={32} color={colors.primary} />
             </View>
-            <Text style={[styles.emptyTitle, { color: palette.text }]}>
+            <Text style={[styles.emptyTitle, font('extraBold'), { color: colors.text }]}>
               Nothing on your nightstand
             </Text>
-            <Text style={[styles.emptyBody, { color: palette.muted }]}>
+            <Text style={[styles.emptyBody, font('regular'), { color: colors.textMuted }]}>
               Head to the Search tab to discover your next read, then mark it as
               Currently Reading.
             </Text>
             <Pressable
-              style={styles.emptyCta}
+              style={[styles.emptyCta, { backgroundColor: colors.primary, borderRadius: radius.md, ...shadow.card }]}
               onPress={() => router.push('/(tabs)/search')}>
               <Ionicons name="search" size={18} color="#fff" />
-              <Text style={styles.emptyCtaText}>Find a book</Text>
+              <Text style={[styles.emptyCtaText, font('bold')]}>Find a book</Text>
             </Pressable>
           </View>
         ) : (
-          <FlatList
-            data={currentlyReading}
-            keyExtractor={(item) => item.bookId}
-            horizontal
-            nestedScrollEnabled
-            showsHorizontalScrollIndicator={false}
-            snapToInterval={cardWidth + CARD_GAP}
-            decelerationRate="fast"
-            snapToAlignment="start"
-            contentContainerStyle={styles.carousel}
-            renderItem={({ item }) => (
-              <CurrentlyReadingCard
-                book={item}
-                cardWidth={cardWidth}
-                onPress={() => openBook(item)}
-                onLogProgress={() => {
-                  setProgressBook(item);
-                  setModalVisible(true);
-                }}
-              />
-            )}
-          />
+          <View style={styles.verticalList}>
+            {currentlyReading.map((item) => (
+              <View key={item.bookId} style={{ marginBottom: CARD_GAP }}>
+                <CurrentlyReadingCard
+                  book={item}
+                  cardWidth={cardWidth}
+                  onPress={() => openBook(item)}
+                  onLogProgress={() => {
+                    setProgressBook(item);
+                    setModalVisible(true);
+                  }}
+                />
+              </View>
+            ))}
+          </View>
         )}
       </ScrollView>
 
@@ -278,28 +263,41 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   scroll: {
-    paddingBottom: theme.spacing.xl,
+    paddingBottom: 32,
   },
   centered: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingHorizontal: 24,
+    paddingTop: 8,
+    paddingBottom: 24,
+    gap: 12,
+  },
   header: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.sm,
-    paddingBottom: theme.spacing.lg,
+    flex: 1,
+  },
+  themeToggle: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
   },
   greeting: {
     fontSize: 14,
-    fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.6,
     lineHeight: 20,
   },
   username: {
     fontSize: 30,
-    fontWeight: '800',
     letterSpacing: -0.5,
     lineHeight: 38,
     marginTop: 6,
@@ -311,12 +309,11 @@ const styles = StyleSheet.create({
   },
   statsCard: {
     flexDirection: 'row',
-    marginHorizontal: theme.spacing.lg,
-    borderRadius: theme.radius.xl,
-    paddingVertical: theme.spacing.lg,
-    paddingHorizontal: theme.spacing.md,
+    marginHorizontal: 24,
+    borderRadius: 24,
+    paddingVertical: 24,
+    paddingHorizontal: 16,
     borderWidth: 1,
-    ...theme.shadow.card,
   },
   statItem: {
     flex: 1,
@@ -324,12 +321,10 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 36,
-    fontWeight: '800',
     letterSpacing: -1,
   },
   statLabel: {
     fontSize: 12,
-    fontWeight: '600',
     textAlign: 'center',
     marginTop: 6,
     lineHeight: 16,
@@ -343,31 +338,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'baseline',
     justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.lg,
-    marginTop: theme.spacing.lg,
-    marginBottom: theme.spacing.md,
+    paddingHorizontal: 24,
+    marginTop: 24,
+    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: '800',
     letterSpacing: -0.3,
   },
   sectionCount: {
     fontSize: 14,
-    fontWeight: '600',
   },
-  carousel: {
-    paddingLeft: theme.spacing.lg,
-    paddingRight: theme.spacing.lg - CARD_GAP,
-    paddingBottom: theme.spacing.sm,
+  verticalList: {
+    paddingHorizontal: 24,
+    paddingBottom: 8,
   },
   emptyCard: {
-    marginHorizontal: theme.spacing.lg,
-    borderRadius: theme.radius.xl,
-    padding: theme.spacing.lg,
+    marginHorizontal: 24,
+    borderRadius: 24,
+    padding: 24,
     alignItems: 'center',
     borderWidth: 1,
-    ...theme.shadow.card,
   },
   emptyIcon: {
     width: 64,
@@ -376,34 +367,29 @@ const styles = StyleSheet.create({
     backgroundColor: '#EFF6FF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: theme.spacing.md,
+    marginBottom: 16,
   },
   emptyTitle: {
     fontSize: 20,
-    fontWeight: '800',
     textAlign: 'center',
   },
   emptyBody: {
     fontSize: 15,
     textAlign: 'center',
     lineHeight: 22,
-    marginTop: theme.spacing.sm,
+    marginTop: 8,
     maxWidth: 300,
   },
   emptyCta: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginTop: theme.spacing.lg,
-    backgroundColor: Colors.primary,
-    paddingHorizontal: theme.spacing.lg,
+    marginTop: 24,
+    paddingHorizontal: 24,
     paddingVertical: 14,
-    borderRadius: theme.radius.md,
-    ...theme.shadow.card,
   },
   emptyCtaText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '700',
   },
 });

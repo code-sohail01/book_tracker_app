@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -9,15 +9,14 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  useColorScheme,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import StarRating from '@/components/StarRating';
 import StatusPicker from '@/components/StatusPicker';
-import { Colors } from '@/constants/Colors';
-import { theme } from '@/constants/theme';
+import { font } from '@/constants/theme';
+import { useTheme } from '@/context/ThemeContext';
 import {
   fetchGoogleVolume,
   fetchMyBooks,
@@ -43,11 +42,15 @@ function secureCover(url: string) {
   return url ? url.replace('http://', 'https://') : '';
 }
 
+function stripHtml(html: string) {
+  return html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+}
+
 export default function BookDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { theme, isDarkMode } = useTheme();
+  const { colors, spacing, radius, shadow } = theme;
 
   const params = useLocalSearchParams<{
     id: string;
@@ -72,26 +75,6 @@ export default function BookDetailScreen() {
   const [rating, setRating] = useState(0);
 
   const isInLibrary = Boolean(savedCopy);
-
-  const palette = useMemo(
-    () =>
-      isDark
-        ? {
-            bg: '#0B1220',
-            card: '#151D2E',
-            text: '#F8FAFC',
-            muted: '#94A3B8',
-            fade: ['transparent', '#0B1220'] as const,
-          }
-        : {
-            bg: Colors.background,
-            card: Colors.surface,
-            text: Colors.text,
-            muted: Colors.textMuted,
-            fade: ['transparent', Colors.background] as const,
-          },
-    [isDark],
-  );
 
   const loadBook = useCallback(async () => {
     if (!bookId) return;
@@ -151,12 +134,13 @@ export default function BookDetailScreen() {
     } finally {
       setLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookId]); // ✅ FIXED: Removed 'params' to permanently kill the infinite loop
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookId]);
 
   useEffect(() => {
     loadBook();
-  }, [loadBook]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookId]);
 
   const info = volume?.volumeInfo;
   const cover =
@@ -166,6 +150,10 @@ export default function BookDetailScreen() {
         (Array.isArray(params.coverUrl) ? params.coverUrl[0] : params.coverUrl) ??
         '',
     ) || 'https://via.placeholder.com/400x600?text=No+Cover';
+
+  const description = info?.description
+    ? stripHtml(info.description)
+    : 'No description available for this title.';
 
   const handleSave = async () => {
     if (!volume) return;
@@ -197,8 +185,8 @@ export default function BookDetailScreen() {
 
   if (loading || !volume) {
     return (
-      <View style={[styles.centered, { backgroundColor: palette.bg }]}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+      <View style={[styles.centered, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -208,51 +196,78 @@ export default function BookDetailScreen() {
   const publisher = info?.publisher;
 
   return (
-    <View style={[styles.root, { backgroundColor: palette.bg }]}>
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}>
         <View style={styles.heroWrap}>
           <ImageBackground source={{ uri: cover }} style={styles.hero} resizeMode="cover">
-            <View style={[styles.heroFade, { backgroundColor: palette.fade[0] }]} />
+            <View style={[styles.heroFade, { backgroundColor: 'transparent' }]} />
             <View
               style={[
                 styles.heroFadeBottom,
-                { backgroundColor: isDark ? '#0B1220' : Colors.background },
+                { backgroundColor: colors.background },
               ]}
             />
           </ImageBackground>
           <Pressable
             onPress={() => router.back()}
             style={[styles.backButton, { top: insets.top + 8 }]}>
-            <Text style={styles.backText}>← Back</Text>
+            <Text style={[styles.backText, font('semiBold')]}>← Back</Text>
           </Pressable>
         </View>
 
-        <View style={[styles.sheet, { backgroundColor: palette.bg }]}>
-          <View style={[styles.coverFloat]}>
-            <Image source={{ uri: cover }} style={styles.coverThumb} />
+        <View style={[styles.sheet, { backgroundColor: colors.background }]}>
+          <View style={styles.coverFloat}>
+            <Image
+              source={{ uri: cover }}
+              style={[styles.coverThumb, { borderColor: colors.surface }]}
+            />
           </View>
 
           <View style={styles.metaBlock}>
-            <Text style={[styles.bookTitle, { color: palette.text }]}>
+            <Text style={[styles.bookTitle, font('extraBold'), { color: colors.text }]}>
               {info?.title ?? 'Untitled'}
             </Text>
-            <Text style={[styles.bookAuthor, { color: palette.muted }]}>{authors}</Text>
+            <Text style={[styles.bookAuthor, font('medium'), { color: colors.textMuted }]}>
+              {authors}
+            </Text>
 
-            <View style={styles.metaGrid}>
+            <View style={[styles.metaGrid, { gap: spacing.md }]}>
               {publisher ? (
-                <View style={[styles.metaItem, { backgroundColor: palette.card }]}>
-                  <Text style={styles.metaLabel}>Publisher</Text>
-                  <Text style={[styles.metaValue, { color: palette.text }]} numberOfLines={2}>
+                <View
+                  style={[
+                    styles.metaItem,
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
+                      borderRadius: radius.md,
+                    },
+                  ]}>
+                  <Text style={[styles.metaLabel, font('bold'), { color: colors.textMuted }]}>
+                    Publisher
+                  </Text>
+                  <Text
+                    style={[styles.metaValue, font('semiBold'), { color: colors.text }]}
+                    numberOfLines={2}>
                     {publisher}
                   </Text>
                 </View>
               ) : null}
               {pageCount ? (
-                <View style={[styles.metaItem, { backgroundColor: palette.card }]}>
-                  <Text style={styles.metaLabel}>Pages</Text>
-                  <Text style={[styles.metaValue, { color: palette.text }]}>
+                <View
+                  style={[
+                    styles.metaItem,
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
+                      borderRadius: radius.md,
+                    },
+                  ]}>
+                  <Text style={[styles.metaLabel, font('bold'), { color: colors.textMuted }]}>
+                    Pages
+                  </Text>
+                  <Text style={[styles.metaValue, font('semiBold'), { color: colors.text }]}>
                     {pageCount}
                   </Text>
                 </View>
@@ -260,10 +275,45 @@ export default function BookDetailScreen() {
             </View>
           </View>
 
-          <View style={[styles.section, { backgroundColor: palette.card }]}>
+          <View
+            style={[
+              styles.section,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+                borderRadius: radius.lg,
+                ...shadow.card,
+              },
+            ]}>
             <StatusPicker value={status} onChange={setStatus} />
-            <Text style={styles.sectionTitle}>Your rating</Text>
+            <Text style={[styles.sectionTitle, font('bold'), { color: colors.textMuted }]}>
+              Your rating
+            </Text>
             <StarRating value={rating} onChange={setRating} />
+          </View>
+
+          <View
+            style={[
+              styles.section,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+                borderRadius: radius.lg,
+                marginTop: spacing.lg,
+                ...shadow.card,
+              },
+            ]}>
+            <Text style={[styles.sectionTitle, font('bold'), { color: colors.textMuted }]}>
+              Description
+            </Text>
+            <Text
+              style={[
+                styles.description,
+                font('regular'),
+                { color: isDarkMode ? colors.text : colors.text },
+              ]}>
+              {description}
+            </Text>
           </View>
         </View>
       </ScrollView>
@@ -272,19 +322,23 @@ export default function BookDetailScreen() {
         style={[
           styles.footer,
           {
-            paddingBottom: insets.bottom + theme.spacing.md,
-            backgroundColor: palette.card,
-            borderTopColor: isDark ? '#334155' : Colors.border,
+            paddingBottom: insets.bottom + spacing.md,
+            backgroundColor: colors.surface,
+            borderTopColor: colors.border,
           },
         ]}>
         <Pressable
-          style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+          style={[
+            styles.saveButton,
+            { backgroundColor: colors.primary, borderRadius: radius.md, ...shadow.card },
+            saving && styles.saveButtonDisabled,
+          ]}
           onPress={handleSave}
           disabled={saving}>
           {saving ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.saveButtonText}>
+            <Text style={[styles.saveButtonText, font('extraBold')]}>
               {isInLibrary ? 'Update Book' : 'Save to Library'}
             </Text>
           )}
@@ -313,37 +367,34 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    left: theme.spacing.md,
+    left: 16,
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: theme.radius.pill,
+    borderRadius: 999,
     backgroundColor: 'rgba(15,23,42,0.55)',
   },
-  backText: { color: '#fff', fontWeight: '600', fontSize: 15 },
+  backText: { color: '#fff', fontSize: 15 },
   sheet: {
     marginTop: -48,
-    borderTopLeftRadius: theme.radius.xl,
-    borderTopRightRadius: theme.radius.xl,
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.xl,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 24,
+    paddingTop: 24,
   },
   coverFloat: {
     alignSelf: 'center',
     marginTop: -100,
-    marginBottom: theme.spacing.md,
-    ...theme.shadow.card,
+    marginBottom: 16,
   },
   coverThumb: {
     width: 120,
     height: 180,
-    borderRadius: theme.radius.md,
+    borderRadius: 12,
     borderWidth: 3,
-    borderColor: Colors.surface,
   },
-  metaBlock: { marginTop: theme.spacing.sm },
+  metaBlock: { marginTop: 8 },
   bookTitle: {
     fontSize: 26,
-    fontWeight: '800',
     textAlign: 'center',
     letterSpacing: -0.5,
     lineHeight: 32,
@@ -351,68 +402,58 @@ const styles = StyleSheet.create({
   bookAuthor: {
     fontSize: 16,
     textAlign: 'center',
-    marginTop: theme.spacing.sm,
+    marginTop: 8,
     lineHeight: 22,
   },
   metaGrid: {
     flexDirection: 'row',
-    gap: theme.spacing.md,
-    marginTop: theme.spacing.lg,
+    marginTop: 24,
   },
   metaItem: {
     flex: 1,
-    padding: theme.spacing.md,
-    borderRadius: theme.radius.md,
+    padding: 16,
     borderWidth: 1,
-    borderColor: Colors.border,
   },
   metaLabel: {
     fontSize: 11,
-    fontWeight: '700',
-    color: Colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 4,
   },
-  metaValue: { fontSize: 15, fontWeight: '600' },
+  metaValue: { fontSize: 15 },
   section: {
-    marginTop: theme.spacing.lg,
-    padding: theme.spacing.lg,
-    borderRadius: theme.radius.lg,
+    marginTop: 24,
+    padding: 24,
     borderWidth: 1,
-    borderColor: Colors.border,
-    ...theme.shadow.card,
   },
   sectionTitle: {
     fontSize: 13,
-    fontWeight: '700',
-    color: Colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
-    marginTop: theme.spacing.md,
-    marginBottom: theme.spacing.sm,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  description: {
+    fontSize: 15,
+    lineHeight: 24,
   },
   footer: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.md,
+    paddingHorizontal: 24,
+    paddingTop: 16,
     borderTopWidth: 1,
   },
   saveButton: {
-    backgroundColor: Colors.primary,
-    borderRadius: theme.radius.md,
     paddingVertical: 18,
     alignItems: 'center',
-    ...theme.shadow.card,
   },
   saveButtonDisabled: { opacity: 0.7 },
   saveButtonText: {
     color: '#fff',
     fontSize: 17,
-    fontWeight: '800',
     letterSpacing: 0.3,
   },
 });

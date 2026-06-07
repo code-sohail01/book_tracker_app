@@ -11,13 +11,12 @@ import {
   Pressable,
   StyleSheet,
   Text,
-  useColorScheme,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Colors } from '@/constants/Colors';
-import { theme } from '@/constants/theme';
+import { font } from '@/constants/theme';
+import { useTheme } from '@/context/ThemeContext';
 
 export type ToastType = 'success' | 'error' | 'info';
 
@@ -34,7 +33,8 @@ const ToastContext = createContext<ToastContextType | null>(null);
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const insets = useSafeAreaInsets();
-  const isDark = useColorScheme() === 'dark';
+  const { theme } = useTheme();
+  const { colors } = theme;
   const [toast, setToast] = useState<ToastState | null>(null);
   const opacity = useRef(new Animated.Value(0)).current;
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -66,10 +66,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const accent =
     toast?.type === 'success'
-      ? Colors.success
+      ? colors.success
       : toast?.type === 'error'
-        ? Colors.error
-        : Colors.primary;
+        ? colors.error
+        : colors.primary;
 
   return (
     <ToastContext.Provider value={value}>
@@ -77,25 +77,18 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {toast ? (
         <Animated.View
           pointerEvents="box-none"
-          style={[
-            styles.host,
-            { top: insets.top + 12, opacity },
-          ]}>
+          style={[styles.host, { top: insets.top + 12, opacity }]}>
           <Pressable
             onPress={hide}
             style={[
               styles.toast,
               {
-                backgroundColor: isDark ? '#151D2E' : Colors.surface,
+                backgroundColor: colors.surface,
                 borderColor: accent,
               },
             ]}>
             <View style={[styles.dot, { backgroundColor: accent }]} />
-            <Text
-              style={[
-                styles.message,
-                { color: isDark ? '#F8FAFC' : Colors.text },
-              ]}>
+            <Text style={[styles.message, font('semiBold'), { color: colors.text }]}>
               {toast.message}
             </Text>
           </Pressable>
@@ -116,30 +109,28 @@ export function useToast() {
 const styles = StyleSheet.create({
   host: {
     position: 'absolute',
-    left: theme.spacing.lg,
-    right: theme.spacing.lg,
+    left: 24,
+    right: 24,
     zIndex: 9999,
     elevation: 20,
   },
   toast: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: theme.radius.lg,
+    borderRadius: 16,
     borderWidth: 1.5,
     paddingVertical: 14,
-    paddingHorizontal: theme.spacing.md,
-    ...theme.shadow.card,
+    paddingHorizontal: 16,
   },
   dot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    marginRight: theme.spacing.sm,
+    marginRight: 8,
   },
   message: {
     flex: 1,
     fontSize: 15,
-    fontWeight: '600',
     lineHeight: 20,
   },
 });

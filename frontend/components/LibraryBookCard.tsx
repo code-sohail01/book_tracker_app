@@ -1,8 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 
-import { Colors } from '@/constants/Colors';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/context/ThemeContext';
 import type { ShelfBook } from '@/types/library';
 
 const COVER_HEIGHT = 168;
@@ -24,6 +23,9 @@ export default function LibraryBookCard({
   onPress,
   onLongPress,
 }: LibraryBookCardProps) {
+  const { theme } = useTheme();
+  const { colors, radius, shadow } = theme;
+
   const cover =
     book.coverUrl?.replace('http://', 'https://') ||
     'https://via.placeholder.com/150x220?text=No+Cover';
@@ -32,8 +34,13 @@ export default function LibraryBookCard({
     <Pressable
       style={({ pressed }) => [
         styles.card,
-        { width },
-        selected && styles.cardSelected,
+        {
+          width,
+          borderRadius: radius.md,
+          backgroundColor: colors.border,
+          ...shadow.card,
+        },
+        selected && { borderWidth: 3, borderColor: colors.primary },
         pressed && styles.pressed,
       ]}
       onPress={onPress}
@@ -41,7 +48,14 @@ export default function LibraryBookCard({
       <Image source={{ uri: cover }} style={styles.cover} />
       <View style={styles.shine} />
       {selectionMode ? (
-        <View style={[styles.check, selected && styles.checkSelected]}>
+        <View
+          style={[
+            styles.check,
+            selected && {
+              backgroundColor: colors.primary,
+              borderColor: colors.primary,
+            },
+          ]}>
           {selected ? <Ionicons name="checkmark" size={14} color="#fff" /> : null}
         </View>
       ) : null}
@@ -52,14 +66,7 @@ export default function LibraryBookCard({
 const styles = StyleSheet.create({
   card: {
     height: COVER_HEIGHT,
-    borderRadius: theme.radius.md,
     overflow: 'hidden',
-    backgroundColor: Colors.border,
-    ...theme.shadow.card,
-  },
-  cardSelected: {
-    borderWidth: 3,
-    borderColor: Colors.primary,
   },
   pressed: {
     opacity: 0.92,
@@ -85,9 +92,5 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(15,23,42,0.35)',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  checkSelected: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
   },
 });

@@ -7,7 +7,6 @@ import {
   Pressable,
   StyleSheet,
   Text,
-  useColorScheme,
   useWindowDimensions,
   View,
 } from 'react-native';
@@ -16,15 +15,14 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import LibraryBookCard from '@/components/LibraryBookCard';
 import LibrarySegmentedTabs, { type LibraryTab } from '@/components/LibrarySegmentedTabs';
 import WhereToModal from '@/components/WhereToModal';
-import { Colors } from '@/constants/Colors';
-import { theme } from '@/constants/theme';
+import { font } from '@/constants/theme';
+import { useTheme } from '@/context/ThemeContext';
 import { useToast } from '@/context/ToastContext';
 import {
-  batchUpdateBooks,
   deleteBooksBatch,
   fetchMyBooks,
-  updateBook,         // <--- ADD THIS
-  fetchGoogleVolume,  // <--- ADD THIS
+  updateBook,
+  fetchGoogleVolume,
 } from '@/services/booksApi';
 import type { BookStatus, ShelfBook } from '@/types/library';
 
@@ -43,7 +41,8 @@ export default function LibraryScreen() {
   const insets = useSafeAreaInsets();
   const { width: screenWidth } = useWindowDimensions();
   const { showToast } = useToast();
-  const isDark = useColorScheme() === 'dark';
+  const { theme } = useTheme();
+  const { colors, spacing, radius, shadow } = theme;
 
   const [activeTab, setActiveTab] = useState<BookStatus>('currently_reading');
   const [books, setBooks] = useState<ShelfBook[]>([]);
@@ -54,22 +53,9 @@ export default function LibraryScreen() {
   const [moveModalVisible, setMoveModalVisible] = useState(false);
   const [acting, setActing] = useState(false);
 
-  const horizontalPadding = theme.spacing.lg * 2;
+  const horizontalPadding = spacing.lg * 2;
   const itemWidth =
     (screenWidth - horizontalPadding - GRID_GAP * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
-
-  const palette = useMemo(
-    () =>
-      isDark
-        ? { bg: '#0B1220', card: '#151D2E', text: '#F8FAFC', muted: '#94A3B8' }
-        : {
-            bg: Colors.background,
-            card: Colors.surface,
-            text: Colors.text,
-            muted: Colors.textMuted,
-          },
-    [isDark],
-  );
 
   const loadLibrary = useCallback(async () => {
     setLoading(true);
@@ -195,18 +181,31 @@ const handleMove = async (status: BookStatus) => {
 
   return (
     <SafeAreaView
-      style={[styles.safe, { backgroundColor: palette.bg }]}
+      style={[styles.safe, { backgroundColor: colors.background }]}
       edges={['top', 'left', 'right']}>
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <View style={styles.headerText}>
-            <Text style={[styles.heading, { color: palette.text }]}>My Library</Text>
-            <Text style={[styles.subheading, { color: palette.muted }]}>
+            <Text style={[styles.heading, font('extraBold'), { color: colors.text }]}>
+              My Library
+            </Text>
+            <Text style={[styles.subheading, font('regular'), { color: colors.textMuted }]}>
               {books.length} {books.length === 1 ? 'book' : 'books'} saved
             </Text>
           </View>
           <Pressable
-            style={[styles.selectBtn, selectionMode && styles.selectBtnActive]}
+            style={[
+              styles.selectBtn,
+              {
+                borderColor: colors.border,
+                backgroundColor: colors.surface,
+                borderRadius: radius.md,
+              },
+              selectionMode && {
+                backgroundColor: colors.chipSelectedBg,
+                borderColor: colors.chipSelectedBorder,
+              },
+            ]}
             onPress={() => {
               if (selectionMode) exitSelection();
               else setSelectionMode(true);
@@ -214,7 +213,8 @@ const handleMove = async (status: BookStatus) => {
             <Text
               style={[
                 styles.selectBtnText,
-                selectionMode && styles.selectBtnTextActive,
+                font('bold'),
+                { color: colors.primary },
               ]}>
               {selectionMode ? 'Done' : 'Select'}
             </Text>
@@ -233,13 +233,15 @@ const handleMove = async (status: BookStatus) => {
 
       {loading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : error ? (
         <View style={styles.centered}>
-          <Text style={[styles.emptyTitle, { color: palette.text }]}>{error}</Text>
-          <Pressable style={styles.retry} onPress={loadLibrary}>
-            <Text style={styles.retryText}>Try again</Text>
+          <Text style={[styles.emptyTitle, font('bold'), { color: colors.text }]}>{error}</Text>
+          <Pressable
+            style={[styles.retry, { backgroundColor: colors.primary, borderRadius: radius.md }]}
+            onPress={loadLibrary}>
+            <Text style={[styles.retryText, font('bold')]}>Try again</Text>
           </Pressable>
         </View>
       ) : (
@@ -252,10 +254,10 @@ const handleMove = async (status: BookStatus) => {
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={styles.centered}>
-              <Text style={[styles.emptyTitle, { color: palette.text }]}>
+              <Text style={[styles.emptyTitle, font('bold'), { color: colors.text }]}>
                 No books here yet
               </Text>
-              <Text style={[styles.emptyBody, { color: palette.muted }]}>
+              <Text style={[styles.emptyBody, font('regular'), { color: colors.textMuted }]}>
                 Save titles from Search or mark books with this status.
               </Text>
             </View>
@@ -283,28 +285,37 @@ const handleMove = async (status: BookStatus) => {
           style={[
             styles.fabBar,
             {
-              paddingBottom: insets.bottom + theme.spacing.md,
-              backgroundColor: palette.card,
-              borderTopColor: isDark ? '#334155' : Colors.border,
+              paddingBottom: insets.bottom + spacing.md,
+              backgroundColor: colors.surface,
+              borderTopColor: colors.border,
             },
           ]}>
-          <Text style={[styles.fabLabel, { color: palette.muted }]}>
+          <Text style={[styles.fabLabel, font('semiBold'), { color: colors.textMuted }]}>
             {selectedIds.size} selected
           </Text>
           <View style={styles.fabActions}>
             <Pressable
-              style={styles.fabSecondary}
+              style={[
+                styles.fabSecondary,
+                {
+                  backgroundColor: colors.chipSelectedBg,
+                  borderColor: colors.chipSelectedBorder,
+                  borderRadius: radius.md,
+                },
+              ]}
               onPress={() => setMoveModalVisible(true)}
               disabled={acting}>
-              <Ionicons name="folder-open-outline" size={18} color={Colors.primary} />
-              <Text style={styles.fabSecondaryText}>Move to…</Text>
+              <Ionicons name="folder-open-outline" size={18} color={colors.primary} />
+              <Text style={[styles.fabSecondaryText, font('bold'), { color: colors.primary }]}>
+                Move to…
+              </Text>
             </Pressable>
             <Pressable
-              style={styles.fabDanger}
+              style={[styles.fabDanger, { backgroundColor: colors.error, borderRadius: radius.md }]}
               onPress={handleDelete}
               disabled={acting}>
               <Ionicons name="trash-outline" size={18} color="#fff" />
-              <Text style={styles.fabDangerText}>Delete</Text>
+              <Text style={[styles.fabDangerText, font('bold')]}>Delete</Text>
             </Pressable>
           </View>
         </View>
@@ -324,20 +335,19 @@ const handleMove = async (status: BookStatus) => {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   header: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.md,
-    paddingBottom: theme.spacing.sm,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 8,
   },
   headerTop: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    gap: theme.spacing.md,
+    gap: 16,
   },
   headerText: { flex: 1 },
   heading: {
     fontSize: 28,
-    fontWeight: '800',
     letterSpacing: -0.5,
     lineHeight: 34,
   },
@@ -349,25 +359,13 @@ const styles = StyleSheet.create({
   selectBtn: {
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: theme.radius.md,
     borderWidth: 1.5,
-    borderColor: Colors.border,
-    backgroundColor: Colors.surface,
-  },
-  selectBtnActive: {
-    backgroundColor: '#EFF6FF',
-    borderColor: Colors.primary,
   },
   selectBtnText: {
     fontSize: 14,
-    fontWeight: '700',
-    color: Colors.primary,
-  },
-  selectBtnTextActive: {
-    color: Colors.primary,
   },
   grid: {
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: 24,
     paddingBottom: 120,
   },
   gridRow: {
@@ -378,45 +376,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingTop: 48,
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: 24,
   },
   emptyTitle: {
     fontSize: 18,
-    fontWeight: '700',
     textAlign: 'center',
   },
   emptyBody: {
     fontSize: 15,
     textAlign: 'center',
-    marginTop: theme.spacing.sm,
+    marginTop: 8,
     lineHeight: 22,
   },
   retry: {
-    marginTop: theme.spacing.md,
-    paddingHorizontal: theme.spacing.lg,
+    marginTop: 16,
+    paddingHorizontal: 24,
     paddingVertical: 12,
-    backgroundColor: Colors.primary,
-    borderRadius: theme.radius.md,
   },
-  retryText: { color: '#fff', fontWeight: '700' },
+  retryText: { color: '#fff' },
   fabBar: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
     borderTopWidth: 1,
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.md,
-    ...theme.shadow.tabBar,
+    paddingHorizontal: 24,
+    paddingTop: 16,
   },
   fabLabel: {
     fontSize: 13,
-    fontWeight: '600',
-    marginBottom: theme.spacing.sm,
+    marginBottom: 8,
   },
   fabActions: {
     flexDirection: 'row',
-    gap: theme.spacing.sm,
+    gap: 8,
   },
   fabSecondary: {
     flex: 1,
@@ -425,14 +418,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     paddingVertical: 14,
-    borderRadius: theme.radius.md,
-    backgroundColor: '#EFF6FF',
     borderWidth: 1,
-    borderColor: '#BFDBFE',
   },
   fabSecondaryText: {
-    color: Colors.primary,
-    fontWeight: '700',
     fontSize: 15,
   },
   fabDanger: {
@@ -442,12 +430,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     paddingVertical: 14,
-    borderRadius: theme.radius.md,
-    backgroundColor: Colors.error,
   },
   fabDangerText: {
     color: '#fff',
-    fontWeight: '700',
     fontSize: 15,
   },
 });

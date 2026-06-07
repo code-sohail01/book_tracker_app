@@ -8,12 +8,11 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  useColorScheme,
   View,
 } from 'react-native';
 
-import { Colors } from '@/constants/Colors';
-import { theme } from '@/constants/theme';
+import { font } from '@/constants/theme';
+import { useTheme } from '@/context/ThemeContext';
 import type { ShelfBook } from '@/types/library';
 
 type LogProgressModalProps = {
@@ -29,17 +28,14 @@ export default function LogProgressModal({
   onClose,
   onSubmit,
 }: LogProgressModalProps) {
-  const isDark = useColorScheme() === 'dark';
+  const { theme } = useTheme();
+  const { colors, radius } = theme;
   const [pages, setPages] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (visible) setPages('');
   }, [visible, book?.bookId]);
-
-  const palette = isDark
-    ? { sheet: '#151D2E', text: '#F8FAFC', muted: '#94A3B8', input: '#1E293B' }
-    : { sheet: Colors.surface, text: Colors.text, muted: Colors.textMuted, input: '#F8FAFC' };
 
   const handleSave = async () => {
     const value = parseInt(pages, 10);
@@ -55,47 +51,71 @@ export default function LogProgressModal({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose}>
+      <Pressable
+        style={[styles.backdrop, { backgroundColor: colors.overlay }]}
+        onPress={onClose}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.keyboard}>
-          <View style={[styles.sheet, { backgroundColor: palette.sheet }]}>
-            <View style={styles.handle} />
-            <Text style={[styles.title, { color: palette.text }]}>Log progress</Text>
-            <Text style={[styles.subtitle, { color: palette.muted }]} numberOfLines={2}>
+          <View
+            style={[
+              styles.sheet,
+              {
+                backgroundColor: colors.surface,
+                borderTopLeftRadius: radius.xl,
+                borderTopRightRadius: radius.xl,
+              },
+            ]}>
+            <View style={[styles.handle, { backgroundColor: colors.border }]} />
+            <Text style={[styles.title, font('extraBold'), { color: colors.text }]}>
+              Log progress
+            </Text>
+            <Text
+              style={[styles.subtitle, font('regular'), { color: colors.textMuted }]}
+              numberOfLines={2}>
               {book?.title ?? 'Book'}
             </Text>
 
-            <Text style={[styles.label, { color: palette.muted }]}>Pages read today</Text>
+            <Text style={[styles.label, font('bold'), { color: colors.textMuted }]}>
+              Pages read today
+            </Text>
             <TextInput
               style={[
                 styles.input,
+                font('semiBold'),
                 {
-                  backgroundColor: palette.input,
-                  color: palette.text,
-                  borderColor: isDark ? '#334155' : Colors.border,
+                  backgroundColor: colors.inputBg,
+                  color: colors.text,
+                  borderColor: colors.border,
+                  borderRadius: radius.md,
                 },
               ]}
               value={pages}
               onChangeText={setPages}
               keyboardType="number-pad"
               placeholder="e.g. 24"
-              placeholderTextColor={palette.muted}
+              placeholderTextColor={colors.textMuted}
             />
 
             <Pressable
-              style={[styles.primary, saving && styles.primaryDisabled]}
+              style={[
+                styles.primary,
+                { backgroundColor: colors.primary, borderRadius: radius.md },
+                saving && styles.primaryDisabled,
+              ]}
               onPress={handleSave}
               disabled={saving || !pages.trim()}>
               {saving ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.primaryText}>Save progress</Text>
+                <Text style={[styles.primaryText, font('bold')]}>Save progress</Text>
               )}
             </Pressable>
 
             <Pressable onPress={onClose} style={styles.cancel}>
-              <Text style={[styles.cancelText, { color: palette.muted }]}>Cancel</Text>
+              <Text style={[styles.cancelText, font('semiBold'), { color: colors.textMuted }]}>
+                Cancel
+              </Text>
             </Pressable>
           </View>
         </KeyboardAvoidingView>
@@ -107,64 +127,53 @@ export default function LogProgressModal({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(15,23,42,0.55)',
     justifyContent: 'flex-end',
   },
   keyboard: { width: '100%' },
   sheet: {
-    borderTopLeftRadius: theme.radius.xl,
-    borderTopRightRadius: theme.radius.xl,
-    paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl,
-    paddingTop: theme.spacing.md,
-    ...theme.shadow.card,
+    paddingHorizontal: 24,
+    paddingBottom: 32,
+    paddingTop: 16,
   },
   handle: {
     width: 40,
     height: 4,
     borderRadius: 2,
-    backgroundColor: Colors.border,
     alignSelf: 'center',
-    marginBottom: theme.spacing.md,
+    marginBottom: 16,
   },
   title: {
     fontSize: 22,
-    fontWeight: '800',
     letterSpacing: -0.3,
   },
   subtitle: {
     fontSize: 15,
     marginTop: 6,
-    marginBottom: theme.spacing.lg,
+    marginBottom: 24,
     lineHeight: 22,
   },
   label: {
     fontSize: 12,
-    fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.6,
-    marginBottom: theme.spacing.sm,
+    marginBottom: 8,
   },
   input: {
     borderWidth: 1.5,
-    borderRadius: theme.radius.md,
-    paddingHorizontal: theme.spacing.md,
+    paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 20,
-    fontWeight: '600',
-    marginBottom: theme.spacing.lg,
+    marginBottom: 24,
   },
   primary: {
-    backgroundColor: Colors.primary,
-    borderRadius: theme.radius.md,
     paddingVertical: 16,
     alignItems: 'center',
   },
   primaryDisabled: { opacity: 0.65 },
-  primaryText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  primaryText: { color: '#fff', fontSize: 16 },
   cancel: {
     alignItems: 'center',
-    paddingVertical: theme.spacing.md,
+    paddingVertical: 16,
   },
-  cancelText: { fontSize: 15, fontWeight: '600' },
+  cancelText: { fontSize: 15 },
 });

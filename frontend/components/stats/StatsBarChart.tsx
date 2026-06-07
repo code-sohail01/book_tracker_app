@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { Colors } from '@/constants/Colors';
-import { theme } from '@/constants/theme';
+import { font } from '@/constants/theme';
+import { useTheme } from '@/context/ThemeContext';
 import type { MonthBucket } from '@/utils/statsAnalytics';
 
 const CHART_HEIGHT = 168;
@@ -9,10 +9,11 @@ const MIN_BAR_HEIGHT = 6;
 
 type StatsBarChartProps = {
   data: MonthBucket[];
-  isDark: boolean;
 };
 
-export default function StatsBarChart({ data, isDark }: StatsBarChartProps) {
+export default function StatsBarChart({ data }: StatsBarChartProps) {
+  const { theme } = useTheme();
+  const { colors, spacing } = theme;
   const maxCount = Math.max(...data.map((d) => d.count), 1);
 
   return (
@@ -27,11 +28,7 @@ export default function StatsBarChart({ data, isDark }: StatsBarChartProps) {
 
           return (
             <View key={bucket.key} style={styles.barColumn}>
-              <Text
-                style={[
-                  styles.barValue,
-                  { color: isDark ? '#94A3B8' : Colors.textMuted },
-                ]}>
+              <Text style={[styles.barValue, font('bold'), { color: colors.textMuted }]}>
                 {bucket.count > 0 ? bucket.count : ''}
               </Text>
               <View style={styles.barTrack}>
@@ -40,17 +37,14 @@ export default function StatsBarChart({ data, isDark }: StatsBarChartProps) {
                     styles.bar,
                     {
                       height: barHeight,
-                      backgroundColor: bucket.count > 0 ? Colors.primary : isDark ? '#334155' : '#E2E8F0',
+                      backgroundColor:
+                        bucket.count > 0 ? colors.primary : colors.border,
                       opacity: bucket.count > 0 ? 1 : 0.55,
                     },
                   ]}
                 />
               </View>
-              <Text
-                style={[
-                  styles.barLabel,
-                  { color: isDark ? '#94A3B8' : Colors.textMuted },
-                ]}>
+              <Text style={[styles.barLabel, font('semiBold'), { color: colors.textMuted }]}>
                 {bucket.label}
               </Text>
             </View>
@@ -63,13 +57,13 @@ export default function StatsBarChart({ data, isDark }: StatsBarChartProps) {
 
 const styles = StyleSheet.create({
   wrap: {
-    marginTop: theme.spacing.sm,
+    marginTop: 8,
   },
   chartArea: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
-    gap: theme.spacing.sm,
+    gap: 8,
   },
   barColumn: {
     flex: 1,
@@ -77,7 +71,6 @@ const styles = StyleSheet.create({
   },
   barValue: {
     fontSize: 11,
-    fontWeight: '700',
     marginBottom: 4,
     minHeight: 14,
   },
@@ -95,8 +88,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 4,
   },
   barLabel: {
-    marginTop: theme.spacing.sm,
+    marginTop: 8,
     fontSize: 11,
-    fontWeight: '600',
   },
 });

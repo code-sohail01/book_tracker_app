@@ -1,7 +1,7 @@
-import { Modal, Pressable, StyleSheet, Text, useColorScheme, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Colors } from '@/constants/Colors';
-import { theme } from '@/constants/theme';
+import { font } from '@/constants/theme';
+import { useTheme } from '@/context/ThemeContext';
 import { BOOK_STATUS_OPTIONS, type BookStatus } from '@/types/library';
 
 type WhereToModalProps = {
@@ -21,19 +21,30 @@ export default function WhereToModal({
   onClose,
   onSelect,
 }: WhereToModalProps) {
-  const isDark = useColorScheme() === 'dark';
-
-  const sheet = isDark ? '#151D2E' : Colors.surface;
-  const text = isDark ? '#F8FAFC' : Colors.text;
-  const muted = isDark ? '#94A3B8' : Colors.textMuted;
+  const { theme } = useTheme();
+  const { colors, spacing, radius } = theme;
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <View style={[styles.sheet, { backgroundColor: sheet }]}>
-          <View style={styles.handle} />
-          <Text style={[styles.title, { color: text }]}>{title}</Text>
-          <Text style={[styles.subtitle, { color: muted }]} numberOfLines={2}>
+      <Pressable
+        style={[styles.backdrop, { backgroundColor: colors.overlay }]}
+        onPress={onClose}>
+        <View
+          style={[
+            styles.sheet,
+            {
+              backgroundColor: colors.surface,
+              borderTopLeftRadius: radius.xl,
+              borderTopRightRadius: radius.xl,
+            },
+          ]}>
+          <View style={[styles.handle, { backgroundColor: colors.border }]} />
+          <Text style={[styles.title, font('extraBold'), { color: colors.text }]}>
+            {title}
+          </Text>
+          <Text
+            style={[styles.subtitle, font('regular'), { color: colors.textMuted }]}
+            numberOfLines={2}>
             {subtitle ??
               (bookTitle ? `Add “${bookTitle}” to your library as…` : 'Choose a shelf')}
           </Text>
@@ -44,18 +55,23 @@ export default function WhereToModal({
               style={({ pressed }) => [
                 styles.option,
                 {
-                  backgroundColor: isDark ? '#1E293B' : '#F8FAFC',
-                  borderColor: isDark ? '#334155' : Colors.border,
+                  backgroundColor: colors.inputBg,
+                  borderColor: colors.border,
+                  borderRadius: radius.md,
                 },
                 pressed && styles.optionPressed,
               ]}
               onPress={() => onSelect(option.value)}>
-              <Text style={[styles.optionText, { color: text }]}>{option.label}</Text>
+              <Text style={[styles.optionText, font('bold'), { color: colors.text }]}>
+                {option.label}
+              </Text>
             </Pressable>
           ))}
 
           <Pressable onPress={onClose} style={styles.cancel}>
-            <Text style={[styles.cancelText, { color: muted }]}>Cancel</Text>
+            <Text style={[styles.cancelText, font('semiBold'), { color: colors.textMuted }]}>
+              Cancel
+            </Text>
           </Pressable>
         </View>
       </Pressable>
@@ -66,44 +82,38 @@ export default function WhereToModal({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(15,23,42,0.55)',
     justifyContent: 'flex-end',
   },
   sheet: {
-    borderTopLeftRadius: theme.radius.xl,
-    borderTopRightRadius: theme.radius.xl,
-    paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl,
-    paddingTop: theme.spacing.md,
+    paddingHorizontal: 24,
+    paddingBottom: 32,
+    paddingTop: 16,
   },
   handle: {
     width: 40,
     height: 4,
     borderRadius: 2,
-    backgroundColor: Colors.border,
     alignSelf: 'center',
-    marginBottom: theme.spacing.md,
+    marginBottom: 16,
   },
   title: {
     fontSize: 22,
-    fontWeight: '800',
     letterSpacing: -0.3,
   },
   subtitle: {
     fontSize: 15,
     marginTop: 6,
-    marginBottom: theme.spacing.lg,
+    marginBottom: 24,
     lineHeight: 22,
   },
   option: {
     borderWidth: 1.5,
-    borderRadius: theme.radius.md,
     paddingVertical: 16,
-    paddingHorizontal: theme.spacing.md,
-    marginBottom: theme.spacing.sm,
+    paddingHorizontal: 16,
+    marginBottom: 8,
   },
   optionPressed: { opacity: 0.88 },
-  optionText: { fontSize: 16, fontWeight: '700' },
-  cancel: { alignItems: 'center', paddingTop: theme.spacing.md },
-  cancelText: { fontSize: 15, fontWeight: '600' },
+  optionText: { fontSize: 16 },
+  cancel: { alignItems: 'center', paddingTop: 16 },
+  cancelText: { fontSize: 15 },
 });

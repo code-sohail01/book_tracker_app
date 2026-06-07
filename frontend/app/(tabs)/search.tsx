@@ -13,8 +13,8 @@ import BookCard from '@/components/BookCard';
 import SearchInput from '@/components/SearchInput';
 import WhereToModal from '@/components/WhereToModal';
 import { API_BASE_URL } from '@/constants/config';
-import { Colors } from '@/constants/Colors';
-import { theme } from '@/constants/theme';
+import { font } from '@/constants/theme';
+import { useTheme } from '@/context/ThemeContext';
 import { useToast } from '@/context/ToastContext';
 import { useDebounce } from '@/hooks/useDebounce';
 import { saveBook, volumeToSavePayload } from '@/services/booksApi';
@@ -25,6 +25,9 @@ import { navigateToBookDetails } from '@/utils/bookNavigation';
 export default function SearchScreen() {
   const router = useRouter();
   const { showToast } = useToast();
+  const { theme } = useTheme();
+  const { colors, spacing } = theme;
+
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebounce(query, 500);
   const [results, setResults] = useState<GoogleBookVolume[]>([]);
@@ -109,10 +112,16 @@ export default function SearchScreen() {
     !loading && hasSearched && debouncedQuery.trim().length > 0 && results.length === 0;
 
   return (
-    <SafeAreaView style={styles.safe} edges={['left', 'right']}>
+    <SafeAreaView
+      style={[styles.safe, { backgroundColor: colors.background }]}
+      edges={['left', 'right']}>
       <View style={styles.headerBlock}>
-        <Text style={styles.heading}>Discover books</Text>
-        <Text style={styles.subheading}>Live search powered by Google Books</Text>
+        <Text style={[styles.heading, font('extraBold'), { color: colors.text }]}>
+          Discover books
+        </Text>
+        <Text style={[styles.subheading, font('regular'), { color: colors.textMuted }]}>
+          Live search powered by Google Books
+        </Text>
         <SearchInput
           value={query}
           onChangeText={setQuery}
@@ -123,8 +132,10 @@ export default function SearchScreen() {
 
       {loading && results.length === 0 && debouncedQuery.trim().length > 0 ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color={Colors.primary} />
-          <Text style={styles.loadingText}>Searching…</Text>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, font('regular'), { color: colors.textMuted }]}>
+            Searching…
+          </Text>
         </View>
       ) : (
         <FlatList
@@ -138,10 +149,10 @@ export default function SearchScreen() {
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={styles.emptyWrap}>
-              <Text style={styles.emptyTitle}>
+              <Text style={[styles.emptyTitle, font('bold'), { color: colors.text }]}>
                 {showEmpty ? 'No results' : 'Start typing to search'}
               </Text>
-              <Text style={styles.emptyBody}>
+              <Text style={[styles.emptyBody, font('regular'), { color: colors.textMuted }]}>
                 {showEmpty
                   ? `Nothing matched "${debouncedQuery.trim()}". Try another title or author.`
                   : 'Find titles, authors, or ISBNs to add to your library.'}
@@ -175,28 +186,24 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   headerBlock: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.md,
-    paddingBottom: theme.spacing.sm,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 8,
   },
   heading: {
     fontSize: 28,
-    fontWeight: '800',
-    color: Colors.text,
     letterSpacing: -0.5,
   },
   subheading: {
     fontSize: 15,
-    color: Colors.textMuted,
     marginTop: 4,
-    marginBottom: theme.spacing.md,
+    marginBottom: 16,
   },
   list: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl,
+    paddingHorizontal: 24,
+    paddingBottom: 32,
   },
   listEmpty: {
     flexGrow: 1,
@@ -205,27 +212,23 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: theme.spacing.md,
+    gap: 16,
   },
   loadingText: {
-    color: Colors.textMuted,
     fontSize: 15,
   },
   emptyWrap: {
     paddingTop: 48,
-    paddingHorizontal: theme.spacing.md,
+    paddingHorizontal: 16,
     alignItems: 'center',
   },
   emptyTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: Colors.text,
   },
   emptyBody: {
     fontSize: 15,
-    color: Colors.textMuted,
     textAlign: 'center',
-    marginTop: theme.spacing.sm,
+    marginTop: 8,
     lineHeight: 22,
   },
 });

@@ -9,14 +9,13 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  useColorScheme,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/context/AuthContext';
-import { Colors } from '@/constants/Colors';
-import { theme } from '@/constants/theme';
+import { font } from '@/constants/theme';
+import { useTheme } from '@/context/ThemeContext';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const USERNAME_CHECK_MS = 500;
@@ -30,8 +29,9 @@ async function simulateUsernameCheck(username: string): Promise<boolean> {
 
 export default function AuthScreen() {
   const { register, login } = useAuth();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { theme } = useTheme();
+  const { colors, spacing, radius, shadow } = theme;
+  const palette = colors;
 
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
@@ -39,36 +39,6 @@ export default function AuthScreen() {
   const [isRegister, setIsRegister] = useState(false);
   const [loading, setLoading] = useState(false);
   const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>('idle');
-
-  const palette = useMemo(
-    () =>
-      isDark
-        ? {
-            screen: '#0B1220',
-            card: '#151D2E',
-            text: '#F8FAFC',
-            muted: '#94A3B8',
-            inputBg: '#1E293B',
-            inputText: '#F8FAFC',
-            placeholder: '#64748B',
-            border: '#334155',
-            accent: Colors.primary,
-            fieldLabel: '#CBD5E1',
-          }
-        : {
-            screen: Colors.background,
-            card: Colors.surface,
-            text: Colors.text,
-            muted: Colors.textMuted,
-            inputBg: '#F8FAFC',
-            inputText: Colors.text,
-            placeholder: Colors.textMuted,
-            border: Colors.border,
-            accent: Colors.primary,
-            fieldLabel: Colors.textMuted,
-          },
-    [isDark],
-  );
 
   useEffect(() => {
     if (!isRegister) {
@@ -156,48 +126,49 @@ export default function AuthScreen() {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        safe: { flex: 1, backgroundColor: palette.screen },
-        scroll: { flexGrow: 1, justifyContent: 'center', padding: theme.spacing.lg },
-        brand: { alignItems: 'center', marginBottom: theme.spacing.lg },
+        safe: { flex: 1, backgroundColor: palette.background },
+        scroll: { flexGrow: 1, justifyContent: 'center', padding: spacing.lg },
+        brand: { alignItems: 'center', marginBottom: spacing.lg },
         brandMark: {
           width: 56,
           height: 56,
           borderRadius: 16,
-          backgroundColor: palette.accent,
+          backgroundColor: palette.primary,
           alignItems: 'center',
           justifyContent: 'center',
-          marginBottom: theme.spacing.md,
+          marginBottom: spacing.md,
         },
-        brandLetter: { color: '#fff', fontSize: 28, fontWeight: '800' },
+        brandLetter: { color: '#fff', fontSize: 28, ...font('extraBold') },
         card: {
-          backgroundColor: palette.card,
-          borderRadius: theme.radius.xl,
-          padding: theme.spacing.lg,
+          backgroundColor: palette.surface,
+          borderRadius: radius.xl,
+          padding: spacing.lg,
           borderWidth: 1,
           borderColor: palette.border,
-          ...theme.shadow.card,
+          ...shadow.card,
         },
         title: {
           fontSize: 26,
-          fontWeight: '800',
+          ...font('extraBold'),
           color: palette.text,
           textAlign: 'center',
           letterSpacing: -0.5,
         },
         subtitle: {
           fontSize: 15,
-          color: palette.muted,
+          ...font('regular'),
+          color: palette.textMuted,
           textAlign: 'center',
-          marginTop: theme.spacing.sm,
-          marginBottom: theme.spacing.lg,
+          marginTop: spacing.sm,
+          marginBottom: spacing.lg,
           lineHeight: 22,
         },
-        field: { marginBottom: theme.spacing.md },
+        field: { marginBottom: spacing.md },
         label: {
           fontSize: 13,
-          fontWeight: '600',
-          color: palette.fieldLabel,
-          marginBottom: theme.spacing.sm,
+          ...font('semiBold'),
+          color: palette.textMuted,
+          marginBottom: spacing.sm,
           marginLeft: 4,
           textTransform: 'uppercase',
           letterSpacing: 0.6,
@@ -205,42 +176,44 @@ export default function AuthScreen() {
         input: {
           borderWidth: 1.5,
           borderColor: palette.border,
-          borderRadius: theme.radius.md,
-          paddingHorizontal: theme.spacing.md,
+          borderRadius: radius.md,
+          paddingHorizontal: spacing.md,
           paddingVertical: 14,
           fontSize: 16,
+          ...font('regular'),
           backgroundColor: palette.inputBg,
-          color: palette.inputText,
+          color: palette.text,
         },
         inputFocused: {
-          borderColor: palette.accent,
+          borderColor: palette.primary,
         },
         hint: {
           marginTop: 6,
           marginLeft: 4,
           fontSize: 12,
-          color: palette.muted,
+          ...font('regular'),
+          color: palette.textMuted,
         },
-        hintSuccess: { color: Colors.success },
-        hintError: { color: Colors.error },
+        hintSuccess: { color: palette.success },
+        hintError: { color: palette.error },
         button: {
-          backgroundColor: palette.accent,
-          borderRadius: theme.radius.md,
+          backgroundColor: palette.primary,
+          borderRadius: radius.md,
           paddingVertical: 16,
           alignItems: 'center',
-          marginTop: theme.spacing.sm,
+          marginTop: spacing.sm,
         },
         buttonDisabled: { opacity: 0.65 },
-        buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+        buttonText: { color: '#fff', fontSize: 16, ...font('bold') },
         toggle: {
-          color: palette.accent,
+          color: palette.primary,
           textAlign: 'center',
-          marginTop: theme.spacing.lg,
+          marginTop: spacing.lg,
           fontSize: 15,
-          fontWeight: '600',
+          ...font('semiBold'),
         },
       }),
-    [palette],
+    [palette, spacing, radius, shadow],
   );
 
   const usernameHint = useCallback(() => {
@@ -248,7 +221,7 @@ export default function AuthScreen() {
     if (usernameStatus === 'checking') {
       return (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <ActivityIndicator size="small" color={palette.accent} />
+          <ActivityIndicator size="small" color={palette.primary} />
           <Text style={styles.hint}>Checking username availability…</Text>
         </View>
       );
@@ -264,7 +237,7 @@ export default function AuthScreen() {
       );
     }
     return null;
-  }, [isRegister, username, usernameStatus, palette.accent, styles]);
+  }, [isRegister, username, usernameStatus, palette.primary, styles]);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -295,7 +268,7 @@ export default function AuthScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="you@example.com"
-                  placeholderTextColor={palette.placeholder}
+                  placeholderTextColor={colors.textMuted}
                   autoCapitalize="none"
                   keyboardType="email-address"
                   value={email}
@@ -311,7 +284,7 @@ export default function AuthScreen() {
               <TextInput
                 style={styles.input}
                 placeholder={isRegister ? 'Choose a username' : 'Username or email'}
-                placeholderTextColor={palette.placeholder}
+                placeholderTextColor={colors.textMuted}
                 autoCapitalize="none"
                 value={username}
                 onChangeText={setUsername}
@@ -324,7 +297,7 @@ export default function AuthScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="••••••••"
-                placeholderTextColor={palette.placeholder}
+                placeholderTextColor={colors.textMuted}
                 secureTextEntry
                 value={password}
                 onChangeText={setPassword}

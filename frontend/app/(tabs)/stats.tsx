@@ -8,16 +8,15 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  useColorScheme,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import GenreBreakdown from '@/components/stats/GenreBreakdown';
 import StatsBarChart from '@/components/stats/StatsBarChart';
-import { Colors } from '@/constants/Colors';
-import { theme } from '@/constants/theme';
+import { font } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 import { fetchMyBooks } from '@/services/booksApi';
 import type { ShelfBook } from '@/types/library';
 import {
@@ -28,35 +27,12 @@ import {
 
 export default function StatsScreen() {
   const { user } = useAuth();
-  const isDark = useColorScheme() === 'dark';
+  const { theme } = useTheme();
+  const { colors, spacing, radius, shadow } = theme;
 
   const [books, setBooks] = useState<ShelfBook[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-
-  const palette = useMemo(
-    () =>
-      isDark
-        ? {
-            bg: '#0B1220',
-            card: '#151D2E',
-            text: '#F8FAFC',
-            muted: '#94A3B8',
-            heroTop: '#1E3A5F',
-            heroBottom: '#151D2E',
-            border: '#334155',
-          }
-        : {
-            bg: Colors.background,
-            card: Colors.surface,
-            text: Colors.text,
-            muted: Colors.textMuted,
-            heroTop: '#DBEAFE',
-            heroBottom: '#EFF6FF',
-            border: Colors.border,
-          },
-    [isDark],
-  );
 
   const loadStats = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -94,30 +70,34 @@ export default function StatsScreen() {
 
   if (loading && books.length === 0) {
     return (
-      <View style={[styles.centered, { backgroundColor: palette.bg }]}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+      <View style={[styles.centered, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: palette.bg }]} edges={['left', 'right']}>
+    <SafeAreaView
+      style={[styles.safe, { backgroundColor: colors.background }]}
+      edges={['left', 'right']}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={() => loadStats(true)}
-            tintColor={Colors.primary}
+            tintColor={colors.primary}
           />
         }
         contentContainerStyle={styles.scroll}>
         <View style={styles.header}>
-          <Text style={[styles.eyebrow, { color: palette.muted }]}>Statistics</Text>
-          <Text style={[styles.title, { color: palette.text }]}>
+          <Text style={[styles.eyebrow, font('bold'), { color: colors.textMuted }]}>
+            Statistics
+          </Text>
+          <Text style={[styles.title, font('extraBold'), { color: colors.text }]}>
             {user ? `${user}'s insights` : 'Your insights'}
           </Text>
-          <Text style={[styles.subtitle, { color: palette.muted }]}>
+          <Text style={[styles.subtitle, font('regular'), { color: colors.textMuted }]}>
             Lifetime reading performance across your library
           </Text>
         </View>
@@ -126,39 +106,38 @@ export default function StatsScreen() {
           style={[
             styles.heroCard,
             {
-              backgroundColor: palette.heroBottom,
-              borderColor: palette.border,
+              backgroundColor: colors.heroBottom,
+              borderColor: colors.border,
+              borderRadius: radius.xl,
+              ...shadow.card,
             },
           ]}>
           <View
-            style={[
-              styles.heroGlow,
-              { backgroundColor: palette.heroTop },
-            ]}
+            style={[styles.heroGlow, { backgroundColor: colors.heroTop }]}
           />
           <View style={styles.heroRow}>
             <View style={styles.heroStat}>
               <View style={styles.heroIcon}>
-                <Ionicons name="library" size={22} color={Colors.primary} />
+                <Ionicons name="library" size={22} color={colors.primary} />
               </View>
-              <Text style={[styles.heroValue, { color: palette.text }]}>
+              <Text style={[styles.heroValue, font('extraBold'), { color: colors.text }]}>
                 {lifetime.totalBooksRead}
               </Text>
-              <Text style={[styles.heroLabel, { color: palette.muted }]}>
+              <Text style={[styles.heroLabel, font('semiBold'), { color: colors.textMuted }]}>
                 Total Books Read
               </Text>
             </View>
 
-            <View style={[styles.heroDivider, { backgroundColor: palette.border }]} />
+            <View style={[styles.heroDivider, { backgroundColor: colors.border }]} />
 
             <View style={styles.heroStat}>
               <View style={styles.heroIcon}>
-                <Ionicons name="document-text" size={22} color={Colors.primary} />
+                <Ionicons name="document-text" size={22} color={colors.primary} />
               </View>
-              <Text style={[styles.heroValue, { color: palette.text }]}>
+              <Text style={[styles.heroValue, font('extraBold'), { color: colors.text }]}>
                 {lifetime.totalPagesRead.toLocaleString()}
               </Text>
-              <Text style={[styles.heroLabel, { color: palette.muted }]}>
+              <Text style={[styles.heroLabel, font('semiBold'), { color: colors.textMuted }]}>
                 Total Pages Read
               </Text>
             </View>
@@ -168,23 +147,33 @@ export default function StatsScreen() {
         <View
           style={[
             styles.sectionCard,
-            { backgroundColor: palette.card, borderColor: palette.border },
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              borderRadius: radius.xl,
+              ...shadow.card,
+            },
           ]}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: palette.text }]}>
+            <Text style={[styles.sectionTitle, font('extraBold'), { color: colors.text }]}>
               Books per month
             </Text>
-            <Text style={[styles.sectionHint, { color: palette.muted }]}>
+            <Text style={[styles.sectionHint, font('medium'), { color: colors.textMuted }]}>
               Last 6 months · finished titles
             </Text>
           </View>
-          <StatsBarChart data={monthly} isDark={isDark} />
+          <StatsBarChart data={monthly} />
         </View>
 
         <View
           style={[
             styles.sectionCard,
-            { backgroundColor: palette.card, borderColor: palette.border },
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              borderRadius: radius.xl,
+              ...shadow.card,
+            },
           ]}>
           <GenreBreakdown
             title={breakdownUsesGenres ? 'Top genres' : 'Library breakdown'}
@@ -194,7 +183,6 @@ export default function StatsScreen() {
                 : 'How your shelf is distributed by status'
             }
             data={breakdown}
-            isDark={isDark}
           />
         </View>
       </ScrollView>
@@ -205,7 +193,7 @@ export default function StatsScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   scroll: {
-    paddingBottom: theme.spacing.xl,
+    paddingBottom: 32,
   },
   centered: {
     flex: 1,
@@ -213,33 +201,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   header: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.md,
-    paddingBottom: theme.spacing.lg,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 24,
   },
   eyebrow: {
     fontSize: 13,
-    fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
   title: {
     fontSize: 28,
-    fontWeight: '800',
     letterSpacing: -0.6,
     marginTop: 4,
   },
   subtitle: {
     fontSize: 15,
     lineHeight: 22,
-    marginTop: theme.spacing.sm,
+    marginTop: 8,
   },
   heroCard: {
-    marginHorizontal: theme.spacing.lg,
-    borderRadius: theme.radius.xl,
+    marginHorizontal: 24,
     borderWidth: 1,
     overflow: 'hidden',
-    ...theme.shadow.card,
   },
   heroGlow: {
     position: 'absolute',
@@ -251,8 +235,8 @@ const styles = StyleSheet.create({
   },
   heroRow: {
     flexDirection: 'row',
-    paddingVertical: theme.spacing.lg,
-    paddingHorizontal: theme.spacing.md,
+    paddingVertical: 24,
+    paddingHorizontal: 16,
   },
   heroStat: {
     flex: 1,
@@ -265,16 +249,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(37,99,235,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: theme.spacing.sm,
+    marginBottom: 8,
   },
   heroValue: {
     fontSize: 40,
-    fontWeight: '800',
     letterSpacing: -1.2,
   },
   heroLabel: {
     fontSize: 12,
-    fontWeight: '600',
     textAlign: 'center',
     marginTop: 6,
     lineHeight: 16,
@@ -282,27 +264,23 @@ const styles = StyleSheet.create({
   },
   heroDivider: {
     width: 1,
-    marginVertical: theme.spacing.sm,
+    marginVertical: 8,
   },
   sectionCard: {
-    marginHorizontal: theme.spacing.lg,
-    marginTop: theme.spacing.lg,
-    borderRadius: theme.radius.xl,
+    marginHorizontal: 24,
+    marginTop: 24,
     borderWidth: 1,
-    padding: theme.spacing.lg,
-    ...theme.shadow.card,
+    padding: 24,
   },
   sectionHeader: {
-    marginBottom: theme.spacing.sm,
+    marginBottom: 8,
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: '800',
     letterSpacing: -0.3,
   },
   sectionHint: {
     fontSize: 13,
     marginTop: 4,
-    fontWeight: '500',
   },
 });
