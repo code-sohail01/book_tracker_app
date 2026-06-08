@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import CurrentlyReadingCard from '@/components/CurrentlyReadingCard';
+import ContributionHeatmap from '@/components/ContributionHeatmap';
 import LogProgressModal from '@/components/LogProgressModal';
 import { font } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
@@ -25,6 +26,7 @@ import {
   logReadingProgress,
 } from '@/services/booksApi';
 import type { DashboardStats, ShelfBook } from '@/types/library';
+import { aggregateHeatmapData } from '@/utils/heatmapAnalytics';
 
 const CARD_HORIZONTAL_INSET = 24;
 const CARD_GAP = 16;
@@ -78,6 +80,8 @@ export default function HomeScreen() {
     () => books.filter((b) => b.status === 'currently_reading'),
     [books],
   );
+
+  const heatmapData = useMemo(() => aggregateHeatmapData(books), [books]);
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -192,6 +196,8 @@ export default function HomeScreen() {
             </Text>
           </View>
         </View>
+
+        <ContributionHeatmap data={heatmapData} />
 
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, font('extraBold'), { color: colors.text }]}>

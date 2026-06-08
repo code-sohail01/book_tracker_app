@@ -26,6 +26,45 @@ async function getAuthedUser(req) {
   return User.findById(req.userId);
 }
 
+/** Normalize any stored date to YYYY-MM-DD (local calendar day). */
+function toDateKey(value) {
+  if (!value) return todayDateKey();
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return todayDateKey();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function todayDateKey() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function serializeReadingLog(log) {
+  return (log || []).map((session) => {
+    const plain = session.toObject ? session.toObject() : session;
+    return {
+      date: toDateKey(plain.date),
+      pagesRead: plain.pagesRead ?? 0,
+      ...(plain.note ? { note: plain.note } : {}),
+    };
+  });
+}
+
+function serializeShelfBook(book) {
+  const obj = book.toObject ? book.toObject() : { ...book };
+  return {
+    ...obj,
+    readingLog: serializeReadingLog(obj.readingLog),
+  };
+}
+
 // 1. SECURE REGISTER
 router.post('/auth/register', async (req, res) => {
   try {
@@ -185,7 +224,7 @@ router.get('/books', authMiddleware, async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    res.status(200).json(user.shelf);
+    res.status(200).json(user.shelf.map(serializeShelfBook));
   } catch (error) {
     console.error("GET /books Error:", error);
     res.status(500).json({ message: 'Error fetching library' });
@@ -264,7 +303,7 @@ router.post('/books/:bookId/progress', authMiddleware, async (req, res) => {
     entry.readingLog = entry.readingLog || [];
     entry.readingLog.push({
       pagesRead,
-      date: new Date(),
+      date: todayDateKey(),
       note: req.body.note || '',
     });
     entry.dateModified = new Date();
@@ -277,7 +316,7 @@ router.post('/books/:bookId/progress', authMiddleware, async (req, res) => {
     await user.save();
     res.status(200).json({
       message: 'Progress logged!',
-      book: user.shelf[idx],
+      book: serializeShelfBook(user.shelf[idx]),
     });
   } catch (error) {
     console.error('POST /books/:bookId/progress Error:', error);

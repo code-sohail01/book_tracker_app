@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
 
-// Blueprint for the "Reading Log History" feature
+// Blueprint for the "Reading Log History" feature (append-only ledger)
 const ReadingSessionSchema = new mongoose.Schema({
-  date: { type: Date, default: Date.now },
+  date: { type: String, required: true }, // YYYY-MM-DD
   pagesRead: { type: Number, required: true },
-  note: { type: String } 
+  note: { type: String },
 });
 
 // Blueprint for a Single Book on your Shelf
